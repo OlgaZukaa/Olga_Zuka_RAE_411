@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>week2</h2>
+
+<p>course: 411 </p>
+<p>courseName: "Software in Telecommunication" </p>
+<p>releaseYear: 2020 </p>
+<p>courseActive: true </p>
+<p>droppedStudents: 0 </p>
+
+<p id="demo1"></p>
+<p id="demo2"></p>
+
+<script>
+
+var jsonObject = {"now":"new Date()"};
+var date = eval(jsonObject.now);
+</script>
+
+<script>
+var text = '{"data":[' +
+'{"value": "11,2" },' +
+'{"value": "22,4" },' + '{"value":"31,1" },' +
+'{"value": "44,5" }]}';
+
+obj = JSON.parse(text);
+document.getElementById("demo1").innerHTML =
+obj.data[1].value + " ";
+
+</script>
+
+<script>
+var text = '{"scores":[' +
+'{"var": "a=77" },' +
+'{"var": "b=46" },' +
+'{"var": "c=91" }]}';
+
+obj = JSON.parse(text);
+document.getElementById("demo2").innerHTML =
+obj.scores[1].var + " ";
+
+</script>
+
+
+
+</body>
+</html>
