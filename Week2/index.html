@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Week 2. Display the data</title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<body>
+    <h1></h1>
+    <h2></h2>
+    <div id="release-year"></div>
+    <div id="date"></div>
+
+    <script>
+        const url = "https://wsdhmsk0e9.execute-api.us-east-2.amazonaws.com/dev"
+        d3.json(url, response => {
+            d3.select("h1").text("Course name: " + response.courseName)
+            d3.select("h2").text("Course code: " + response.course)
+            d3.select("div#release-year").text("Release year: " + response.releaseYear)
+            d3.select("#date").text("Current date: " + response.date)
+        })
+    </script>
+</body>
+
+</html>
