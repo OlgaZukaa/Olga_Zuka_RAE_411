@@ -17,11 +17,11 @@
     <div id="date"></div>
 
     <script>
-        const url = "https://wsdhmsk0e9.execute-api.us-east-2.amazonaws.com/dev"
+        const url = "https://a2ni6t4grk.execute-api.us-east-2.amazonaws.com/dev"
         d3.json(url, response => {
             d3.select("h1").text("Course name: " + response.courseName)
             d3.select("h2").text("Course code: " + response.course)
-            d3.select("div#release-year").text("Release year: " + response.releaseYear)
+            d3.select("#release-year").text("Release year: " + response.releaseYear)
             d3.select("#date").text("Current date: " + response.date)
         })
     </script>
