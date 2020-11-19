@@ -6,134 +6,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Week 3. Visualise the data in graph</title>
+    <title>Week 7. Transform log file data to json and visualize</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 
 <body>
-    <div style="display: flex; flex-wrap: wrap;">
-        <div id="data-graph" style="width: 300px;">
-            <div style="text-align: center;"> DATA </div>
-        </div>
-        <div id="scores-graph" style="width: 300px;">
-            <div style="text-align: center;"> SCORES </div>
-        </div>
-    </div>
+    <h1>Performance statistics</h1>
+    <div id="container"></div>
+
 
     <script>
-
-        const url = "https://a2ni6t4grk.execute-api.us-east-2.amazonaws.com/dev"
+        const url = "https://iv4r6d3mrg.execute-api.us-east-2.amazonaws.com/dev"
         d3.json(url).then(response => {
-            createDataGraph()
-            createScoresGraph()
 
-            function createDataGraph() {
-                //example url: https://observablehq.com/@d3/bar-chart
+            console.log("response = ", response)
 
-                const data = response.data.map((dataItem) => {
-                    return {
-                        name: dataItem[0],
-                        value: dataItem[1]
-                    }
-                })
+            Object.keys(response).forEach((tag, index) => {
 
-                const margin = ({ top: 30, right: 0, bottom: 30, left: 40 })
-                const width = 300
-                const height = 300
+                const tagDiv = d3.select("#container")
+                    .append("div")
+                    .attr("id", tag)
+                    .style("margin", "30px")
 
-                const colors = ["blue", "green", "yellow", "red"]
-
-                const x = d3.scaleBand()
-                    .domain(d3.range(data.length))
-                    .range([margin.left, width - margin.right])
-                    .padding(0.1)
-
-                const y = d3.scaleLinear()
-                    .domain([0, d3.max(data, d => d.value)]).nice()
-                    .range([height - margin.bottom, margin.top])
-
-                const xAxis = g => g
-                    .attr("transform", `translate(0,${height - margin.bottom})`)
-                    .call(d3.axisBottom(x).tickFormat(i => data[i].name).tickSizeOuter(0))
-
-                const yAxis = g => g
-                    .attr("transform", `translate(${margin.left},0)`)
-                    .call(d3.axisLeft(y).ticks(5))
-                    .call(g => g.select(".domain").remove())
-                    .call(g => g.append("text")
-                        .attr("x", -margin.left)
-                        .attr("y", 10)
-                        .attr("fill", "currentColor")
-                        .attr("text-anchor", "start")
-                        .text(data.value))
+                tagDiv.append("div")
+                    .text((index + 1) + ". " + tag)
 
 
-                const svg = d3.select("#data-graph").append("svg") //d3.create("svg")
+
+                const data = response[tag]
+
+                // https://observablehq.com/@d3/line-chart
+
+                margin = ({ top: 20, right: 30, bottom: 30, left: 40 })
+
+                height = 500
+                width = 500
+
+
+                const svg = tagDiv.append("div")
+                    .style("width", "500px")
+                    .style("height", "500px")
+                    .append("svg")
                     .attr("viewBox", [0, 0, width, height]);
 
-                svg.append("g")
-                    .selectAll("rect")
-                    .data(data)
-                    .join("rect")
-                    .attr("fill", (d, i) => colors[i])
-                    .attr("x", (d, i) => x(i))
-                    .attr("y", d => y(d.value))
-                    .attr("height", d => y(0) - y(d.value))
-                    .attr("width", x.bandwidth());
-
-                svg.append("g")
-                    .call(xAxis);
-
-                svg.append("g")
-                    .call(yAxis);
-            }
-
-            function createScoresGraph() {
-                //example url: https://observablehq.com/@d3/scatterplot-with-shapes
-
-                const data = Object.keys(response.scores).map((key) => {
-                    return {
-                        name: key,
-                        value: response.scores[key],
-
-                    }
-                })
-
-                const margin = ({ top: 30, right: 0, bottom: 30, left: 40 })
-                const width = 300
-                const height = 300
-
-                const colors = ["blue", "yellow", "red"]
-                const shapes = [d3.symbolCircle, d3.symbolDiamond, d3.symbolTriangle]
-
                 const x = d3.scaleBand()
                     .domain(d3.range(data.length))
                     .range([margin.left, width - margin.right])
                     .padding(0.1)
 
                 const y = d3.scaleLinear()
-
-                    .domain([0, d3.max(data, d => d.value)]).nice()
+                    .domain([0, d3.max(data, d => d.max)]).nice()
                     .range([height - margin.bottom, margin.top])
+
 
                 const xAxis = g => g
                     .attr("transform", `translate(0,${height - margin.bottom})`)
-                    .call(d3.axisBottom(x).tickFormat(i => data[i].name).tickSizeOuter(0))
+                    .call(d3.axisBottom(x).tickFormat(i => data[i].period).tickSizeOuter(0))
 
                 const yAxis = g => g
                     .attr("transform", `translate(${margin.left},0)`)
                     .call(d3.axisLeft(y))
                     .call(g => g.select(".domain").remove())
-                    .call(g => g.append("text")
-                        .attr("x", -margin.left)
-                        .attr("y", 10)
-                        .attr("fill", "currentColor")
+                    .call(g => g.select(".tick:last-of-type text").clone()
+                        .attr("x", 3)
                         .attr("text-anchor", "start")
-                        .text(data.value))
+                        .attr("font-weight", "bold")
+                        .text(data.y))
 
-
-                const svg = d3.select("#scores-graph").append("svg")
-                    .attr("viewBox", [0, 0, width, height]);
 
                 svg.append("g")
                     .call(xAxis);
@@ -141,19 +80,30 @@
                 svg.append("g")
                     .call(yAxis);
 
+                    addLine("avg", "red", svg)
+                    addLine("min", "green", svg)
+                    addLine("max", "blue", svg)
+                    addLine("stdDev", "orange", svg)
 
-                svg.append("g")
+                function addLine(key, color, svg) {
+                   
+                   const line = d3.line()
+                    .defined(d => !isNaN(d[key]))
+                    .x((d, i) => x(i))
+                    .y(d => y(d[key]))
+
+                    svg.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", color)
                     .attr("stroke-width", 1.5)
-                    .attr("font-family", "sans-serif")
-                    .attr("font-size", 10)
-                    .selectAll("path")
-                    .data(data)
-                    .join("path")
-                    .attr("transform", (d, i) => `translate(${x(i) + x.bandwidth() / 2},${y(d.value)})`)
-                    .attr("fill", (d, i) => colors[i])
-                    .attr("d", (d, i) => d3.symbol().type(shapes[i])());
-            }
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("d", line);
 
+                 }
+
+            })
         })
     </script>
 </body>
