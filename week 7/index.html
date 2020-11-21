@@ -8,12 +8,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Week 7. Transform log file data to json and visualize</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 </head>
 
 <body>
     <h1>Performance statistics</h1>
-    <div id="container"></div>
-
+    <div style="display: flex; flex-wrap: wrap;">
+        <div id="container"></div>
+    </div>
 
     <script>
         const url = "https://iv4r6d3mrg.execute-api.us-east-2.amazonaws.com/dev"
@@ -26,22 +28,19 @@
                 const tagDiv = d3.select("#container")
                     .append("div")
                     .attr("id", tag)
-                    .style("margin", "30px")
+                    .style("margin", "50px")
 
                 tagDiv.append("div")
                     .text((index + 1) + ". " + tag)
-
-
 
                 const data = response[tag]
 
                 // https://observablehq.com/@d3/line-chart
 
-                margin = ({ top: 20, right: 30, bottom: 30, left: 40 })
+                margin = ({ top: 40, right: 150, bottom: 200, left: 40 })
 
                 height = 500
                 width = 500
-
 
                 const svg = tagDiv.append("div")
                     .style("width", "500px")
@@ -58,50 +57,130 @@
                     .domain([0, d3.max(data, d => d.max)]).nice()
                     .range([height - margin.bottom, margin.top])
 
+                const yCount = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d.count)]).nice()
+                    .range([height - margin.bottom, margin.top])
 
                 const xAxis = g => g
                     .attr("transform", `translate(0,${height - margin.bottom})`)
                     .call(d3.axisBottom(x).tickFormat(i => data[i].period).tickSizeOuter(0))
 
-                const yAxis = g => g
+                    .selectAll("text")
+                    .attr("transform", "translate(0,0)rotate(45)")
+                    .style("text-anchor", "start")
+
+                const yAxisLeft = g => g
+
                     .attr("transform", `translate(${margin.left},0)`)
                     .call(d3.axisLeft(y))
-                    .call(g => g.select(".domain").remove())
+                    .call(g => g.select(".domain"))
                     .call(g => g.select(".tick:last-of-type text").clone()
                         .attr("x", 3)
                         .attr("text-anchor", "start")
                         .attr("font-weight", "bold")
                         .text(data.y))
 
+                const yAxisRight = g => g
+
+                    .attr("transform", `translate(${width - margin.right},0)`)
+                    .call(d3.axisRight(yCount))
+                    .call(g => g.select(".domain"))
+                    .call(g => g.select(".tick:last-of-type text").clone()
+                        .attr("x", 20)
+                        .attr("text-anchor", "start")
+                        .attr("font-weight", "bold")
+                        .text(data.y))
 
                 svg.append("g")
                     .call(xAxis);
 
                 svg.append("g")
-                    .call(yAxis);
+                    .call(yAxisLeft);
 
-                    addLine("avg", "red", svg)
-                    addLine("min", "green", svg)
-                    addLine("max", "blue", svg)
-                    addLine("stdDev", "orange", svg)
+                svg.append("g")
+                    .call(yAxisRight);
 
-                function addLine(key, color, svg) {
-                   
-                   const line = d3.line()
-                    .defined(d => !isNaN(d[key]))
-                    .x((d, i) => x(i))
-                    .y(d => y(d[key]))
+                // https://www.d3-graph-gallery.com/graph/custom_axis.html
+                svg.append("text")
+                    .attr("text-anchor", "end")
+                    .attr("y", margin.top - 20)
+                    .attr("x", margin.left)
+                    .text("ms")
+
+                svg.append("text")
+                    .attr("text-anchor", "end")
+                    .attr("y", margin.top - 20)
+                    .attr("x", width - margin.right + 20)
+                    .text("count")
+
+                const lineParams = [
+                    { key: "avg", color: "red", y: y },
+                    { key: "min", color: "green", y: y },
+                    { key: "max", color: "blue", y: y },
+                    { key: "stdDev", color: "orange", y: y },
+                    { key: "count", color: "purple", y: yCount }
+                ]
+                lineParams.forEach(param => {
+
+                    const line = d3.line()
+                        .defined(d => !isNaN(d[param.key]))
+                        .x((d, i) => x(i) + x.bandwidth() / 2)
+                        .y(d => param.y(d[param.key]))
 
                     svg.append("path")
-                    .datum(data)
-                    .attr("fill", "none")
-                    .attr("stroke", color)
-                    .attr("stroke-width", 1.5)
-                    .attr("stroke-linejoin", "round")
-                    .attr("stroke-linecap", "round")
-                    .attr("d", line);
+                        .datum(data)
+                        .attr("id", param.key)
+                        .attr("class", "line")
+                        .attr("fill", "none")
+                        .attr("stroke", param.color)
+                        .attr("stroke-width", 1.5)
+                        .attr("stroke-linejoin", "round")
+                        .attr("stroke-linecap", "round")
+                        .attr("d", line)
+                })
 
-                 }
+                //Legend 
+
+                const keys = lineParams.map(param => param.key)
+
+                const colors = lineParams.map(param => param.color);
+
+                const size = 20
+                svg.selectAll("legend")
+                    .data(keys)
+                    .enter()
+                    .append("rect")
+                    .attr("x", width - margin.right + 50)
+                    .attr("y", function (d, i) { return 100 + i * (size + 5) })
+                    .attr("width", size)
+                    .attr("height", size)
+                    .style("fill", function (d, i) { return colors[i] })
+
+                    // http://bl.ocks.org/bobmonteverde/2070123 
+
+                    .on('mouseover', function (event, key) {
+                        svg.selectAll("path.line")
+                            .style("opacity", 0.2)
+                        svg.select("path.line#" + key)
+                            .style("opacity", 1)
+                            .attr("stroke-width", 5)
+                    })
+                    .on('mouseout', function (event, key) {
+                        svg.selectAll("path.line")
+                            .style("opacity", 1)
+                            .attr("stroke-width", 1.5)
+                    });
+
+                svg.selectAll("mylabels")
+                    .data(keys)
+                    .enter()
+                    .append("text")
+                    .attr("x", width - margin.right + size * 1.2 + 50)
+                    .attr("y", function (d, i) { return 100 + i * (size + 5) + (size / 2) })
+                    .style("fill", function (d, i) { return colors[i] })
+                    .text(function (d) { return d })
+                    .attr("text-anchor", "left")
+                    .style("alignment-baseline", "middle")
 
             })
         })
