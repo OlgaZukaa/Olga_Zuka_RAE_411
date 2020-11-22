@@ -23,7 +23,12 @@
 
             console.log("response = ", response)
 
-            Object.keys(response).forEach((tag, index) => {
+            response.forEach((responseItem, index) => {
+                const tag = responseItem.tag
+
+                const data = responseItem.data
+
+                console.log(responseItem)
 
                 const tagDiv = d3.select("#container")
                     .append("div")
@@ -32,8 +37,6 @@
 
                 tagDiv.append("div")
                     .text((index + 1) + ". " + tag)
-
-                const data = response[tag]
 
                 // https://observablehq.com/@d3/line-chart
 
